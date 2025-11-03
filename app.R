@@ -5,6 +5,13 @@ library(viridisLite)
 library(scales)
 library(magrittr)
 library(RColorBrewer)
+library(dplyr)
+library(sf)
+
+# silence R CMD check notes for dplyr NSE variables used in the app
+if (getRversion() >= "2.15.1") {
+  utils::globalVariables(c("country", "region", "geometry", "color", "avg_expenditure", "mwdays", "state_name"))
+}
 
 ui <- page(
   theme = "light",
@@ -84,39 +91,48 @@ server <- function(input, output, session) {
       return(viridisLite::viridis(n))
     }
 
+    # Determine which dataset to use and normalize to `mean_data` with a `value` column
     if (is.null(input$which_plot) || input$which_plot == "expenditure") {
-      # expenditure map
-        mean_expenditure <- readRDS("mean_expenditure.rds")
-        map_india <- d3po::maps$asia$india
-
-        # apply selected gradient to color column
-        if (!is.null(input$gradient) && "color" %in% names(mean_expenditure)) {
-          vals <- mean_expenditure$avg_expenditure
-          pal <- get_palette(input$gradient, 100)
-          mean_expenditure$color <- ifelse(is.na(vals), "#e0e0e0", scales::col_numeric(domain = range(vals, na.rm = TRUE), palette = pal)(vals))
-        }
-
-        d3po(mean_expenditure) %>%
-          po_geomap(daes(group = id, color = color, size = avg_expenditure, tooltip = state_name), map = map_india) %>%
-          po_background("transparent") %>%
-          po_theme(axis = axis_color, tooltips = tooltip_color)
-    } else if (input$which_plot == "manufacture") {
-      # manufacturing map
-        mean_manufacturing <- readRDS("mean_manufacture.rds")
-        map_india <- d3po::maps$asia$india
-
-        # apply selected gradient to color column
-        if (!is.null(input$gradient) && "color" %in% names(mean_manufacturing)) {
-          vals <- mean_manufacturing$mwdays
-          pal <- get_palette(input$gradient, 100)
-          mean_manufacturing$color <- ifelse(is.na(vals), "#e0e0e0", scales::col_numeric(domain = range(vals, na.rm = TRUE), palette = pal)(vals))
-        }
-
-        d3po(mean_manufacturing) %>%
-          po_geomap(daes(group = id, color = color, size = mwdays, tooltip = state_name), map = map_india) %>%
-          po_background("transparent") %>%
-          po_theme(axis = axis_color, tooltips = tooltip_color)
+      mean_data <- readRDS("mean_expenditure.rds")
+      value_col <- "avg_expenditure"
+      size_mapping <- rlang::sym("avg_expenditure")
+      manufacture_mode <- FALSE
+    } else {
+      mean_data <- readRDS("mean_manufacture.rds")
+      # ensure the manufacturing dataset uses a consistent name
+      value_col <- "mwdays"
+      size_mapping <- rlang::sym("mwdays")
+      manufacture_mode <- TRUE
     }
+
+    map_india <- d3po::subnational %>%
+      filter(country == "India") %>%
+      select(region, geometry) %>%
+      filter(region != "Ladakh") %>%
+      mutate(
+        region = case_when(
+          region == "Dadra and Nagar Haveli and Daman and Diu" ~ "Daman and Diu",
+          region == "Odisha" ~ "Orissa",
+          region == "Uttarakhand" ~ "Uttaranchal",
+          TRUE ~ region
+        )
+      ) %>%
+      mutate(region = as.character(region))
+
+    # apply selected gradient to color column if the dataset has the target metric
+    if (!is.null(input$gradient) && value_col %in% names(mean_data)) {
+      vals <- mean_data[[value_col]]
+      pal <- get_palette(input$gradient, 5)
+    }
+
+    # join the metric data onto the map
+    map_india <- map_india %>%
+      left_join(mean_data, by = c("region" = "state_name"))
+
+    # build the d3po map. use the same color mapping; size depends on chosen plot
+    d3po(map_india) %>%
+      po_geomap(daes(group = region, color = pal, size = !!size_mapping, gradient = TRUE, tooltip = region)) %>%
+      po_theme(axis = axis_color, tooltips = tooltip_color)
   })
 }
 
