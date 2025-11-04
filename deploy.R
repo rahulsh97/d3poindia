@@ -1,4 +1,4 @@
-required_cran <- c("renv", "rsconnect", "assertthat", "dplyr", "purrr", "htmlwidgets")
+required_cran <- c("renv", "rsconnect", "assertthat", "dplyr", "purrr", "sf", "htmlwidgets")
 
 for (p in required_cran) if (!requireNamespace(p, quietly = TRUE)) install.packages(p)
 
