@@ -1,6 +1,7 @@
 # Launch the ShinyApp
 
 library(sf)
+library(geojsonsf)
 library(dplyr)
 library(d3poindia)
 
