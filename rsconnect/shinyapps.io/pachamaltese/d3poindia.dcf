@@ -5,6 +5,6 @@ account: pachamaltese
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 16006388
-bundleId:
+bundleId: 11150325
 url: https://pachadotdev.shinyapps.io/d3poindia/
 version: 1

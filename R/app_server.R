@@ -6,10 +6,11 @@
 #' @import tabler
 #' @import d3po
 #' @importFrom dplyr count group_by left_join mutate n summarise filter
+#' @importFrom rlang sym
 #' @noRd
 app_server <- function(input, output, session) {
   state_totals <- d3poindia::emp_data %>%
-    group_by(region) %>%
+    group_by(!!sym("region")) %>%
     summarise(total = n(), .groups = "drop")
 
   output$emp_year <- renderUI({
@@ -99,16 +100,16 @@ app_server <- function(input, output, session) {
 
     # apply filters based on inputs (supporting multiple selections and '__all__')
     emp_filtered <- d3poindia::emp_data %>%
-      mutate(region = as.character(region))
+      mutate(region = as.character(!!sym("region")))
 
     if (!is.null(input$emp_year) && length(input$emp_year) > 0) {
       emp_filtered <- emp_filtered %>%
-        filter(year %in% input$emp_year)
+        filter(!!sym("year") %in% input$emp_year)
     }
 
     if (!is.null(input$emp_gender) && length(input$emp_gender) > 0) {
       emp_filtered <- emp_filtered %>%
-        filter(gender %in% input$emp_gender)
+        filter(!!sym("gender") %in% input$emp_gender)
     }
 
     if (
@@ -117,7 +118,7 @@ app_server <- function(input, output, session) {
         !("__all__" %in% input$emp_age)
     ) {
       emp_filtered <- emp_filtered %>%
-        filter(age %in% input$emp_age)
+        filter(!!sym("age") %in% input$emp_age)
     }
 
     if (
@@ -126,7 +127,7 @@ app_server <- function(input, output, session) {
         !("__all__" %in% input$emp_sector)
     ) {
       emp_filtered <- emp_filtered %>%
-        filter(sector %in% input$emp_sector)
+        filter(!!sym("sector") %in% input$emp_sector)
     }
 
     if (
@@ -135,7 +136,7 @@ app_server <- function(input, output, session) {
         !("__all__" %in% input$emp_education)
     ) {
       emp_filtered <- emp_filtered %>%
-        filter(education %in% input$emp_education)
+        filter(!!sym("education") %in% input$emp_education)
     }
 
     if (
@@ -144,16 +145,16 @@ app_server <- function(input, output, session) {
         !("__all__" %in% input$emp_employment_type)
     ) {
       emp_filtered <- emp_filtered %>%
-        filter(employment_type %in% input$emp_employment_type)
+        filter(!!sym("employment_type") %in% input$emp_employment_type)
     }
 
     emp_summary <- emp_filtered %>%
-      group_by(region) %>%
+      group_by(!!sym("region")) %>%
       summarise(count = n(), .groups = "drop")
 
     emp_summary <- emp_summary %>%
       left_join(state_totals, by = "region") %>%
-      mutate(proportion = count / total)
+      mutate(proportion = !!sym("count") / !!sym("total"))
 
     value_col <- "proportion"
 
@@ -170,11 +171,11 @@ app_server <- function(input, output, session) {
 
     d3po(d) %>%
       po_geomap(daes(
-        group = region,
+        group = !!sym("region"),
         color = pal,
-        size = proportion,
+        size = !!sym("proportion"),
         gradient = TRUE,
-        tooltip = region
+        tooltip = !!sym("region")
       )) %>%
       po_theme(axis = axis_color, tooltips = tooltip_color)
   })

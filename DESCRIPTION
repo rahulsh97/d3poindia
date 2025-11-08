@@ -15,6 +15,7 @@ Imports:
     dplyr,
     golem,
     magrittr,
+    rlang,
     sf,
     shiny,
     tabler,

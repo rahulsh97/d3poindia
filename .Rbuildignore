@@ -11,3 +11,4 @@ $run_dev.*
 ^rsconnect$
 ^\.rscignore$
 ^pre-process-data\.R$
+^deploy\.R$
