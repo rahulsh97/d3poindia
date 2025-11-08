@@ -1,0 +1,26 @@
+Package: d3poindia
+Title: D3po India Shiny Application
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "firstname",
+           family = "lastname",
+           role = c("aut", "cre"),
+           email = "your@email.com")
+Description: Uses PLFS employment data to visualise employment patterns across India.
+    Built with the D3po framework.
+License: Apache License (>= 2)
+Imports: 
+    config,
+    d3po,
+    dplyr,
+    golem,
+    magrittr,
+    sf,
+    shiny,
+    tabler,
+    viridisLite
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+Depends: 
+    R (>= 3.5)

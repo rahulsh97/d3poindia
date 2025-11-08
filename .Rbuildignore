@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^data-raw$
+dev_history.R
+^dev$
+$run_dev.*
+^.here$
+^LICENSE\.md$
+^documentation$
+^app\.R$
+^rsconnect$
+^\.rscignore$
+^pre-process-data\.R$
