@@ -5,7 +5,6 @@
 #' @import shiny
 #' @import tabler
 #' @import d3po
-#' @importFrom dplyr left_join
 #' @importFrom rlang sym
 #' @noRd
 app_server <- function(input, output, session) {
@@ -33,18 +32,9 @@ app_server <- function(input, output, session) {
 
   # ---- Map ------------------------------------------------------------------
   output$plot <- render_d3po({
-    sel <- selected()
-    unit <- sel$unit[1]
-
-    d <- d3poindia::india_map %>%
-      dplyr::left_join(sel[, c("region", "value")], by = "region")
-    d <- sf::st_as_sf(d)
-    d$value <- round(d$value, 1)
-    d$label <- ifelse(
-      is.na(d$value),
-      paste0(d$region, ": no data (NFHS-5)"),
-      paste0(d$region, ": ", d$value, unit, " - NFHS-5 (2019-21)")
-    )
+    ind <- input$indicator
+    if (is.null(ind)) ind <- "women_schooling10"
+    d <- nfhs_map_data(ind)          # states with no value keep NA -> grey, never 0
 
     pal <- get_palette(input$gradient, 5)
 

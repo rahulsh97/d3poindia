@@ -57,10 +57,19 @@ shinyapps.io, not GitHub Pages).
 
 ## Develop / validate
 ```r
-Rscript data-raw/build_data.R                 # rebuild data/*.rda from sources
-Rscript -e 'devtools::test()'                 # data-integrity tests
+Rscript data-raw/build_india_map.R            # (network) rebuild the boundary RDS from SimpleMaps
+Rscript data-raw/build_data.R                 # rebuild data/*.rda from vendored sources
+Rscript data-raw/verify_nfhs.R                # validate the NFHS extract (national anchor + all-36 checks)
+Rscript -e 'devtools::test()'                 # data-integrity + missing-value output tests
 R CMD build . && R CMD check *.tar.gz --no-manual
 ```
+
+See also: [`data-raw/NFHS_SOURCE.md`](data-raw/NFHS_SOURCE.md) (verification &
+reuse rights), [`data-raw/MAP_SOURCE.md`](data-raw/MAP_SOURCE.md) (boundary
+provenance + checksum), [`docs/BOUNDARY_CHECK.md`](docs/BOUNDARY_CHECK.md)
+(Kashmir/northern outline check), and
+[`docs/DATA_DISCLOSURE_ASSESSMENT.md`](docs/DATA_DISCLOSURE_ASSESSMENT.md)
+(prior PLFS extract in history — finding + remedy).
 
 ## Limitations
 - Descriptive regional context only; not causal, not an industrial outcome.

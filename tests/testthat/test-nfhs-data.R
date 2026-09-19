@@ -48,6 +48,26 @@ test_that("missing states join to NA, never to zero (missing != zero)", {
   expect_false(isTRUE(kerala == 0))            # never silently zero
 })
 
+test_that("map helper renders a genuinely missing state as NA/no-data and builds a widget", {
+  # Force Kerala missing to exercise the grey / 'no data' output path that the
+  # current complete data never triggers on its own.
+  d <- nfhs_map_data("women_anaemia", drop = "Kerala")
+  ker_val <- d$value[d$region == "Kerala"]
+  ker_lab <- d$label[d$region == "Kerala"]
+  expect_true(is.na(ker_val))                       # missing -> NA, not 0
+  expect_false(isTRUE(ker_val == 0))
+  expect_match(ker_lab, "no data")
+  # non-missing states are unaffected
+  expect_false(any(is.na(d$value[d$region != "Kerala"])))
+  # the actual d3po output path builds without error with the NA present
+  obj <- d3po::po_geomap(
+    d3po::d3po(d),
+    d3po::daes(group = region, color = viridisLite::viridis(5),
+               size = value, gradient = TRUE, tooltip = label)
+  )
+  expect_true(inherits(obj, "d3po"))
+})
+
 test_that("known NFHS-5 reference values are preserved (guards transcription errors)", {
   d <- d3poindia::nfhs_state
   ker <- d$value[d$indicator == "women_schooling10" & d$region == "Kerala"]

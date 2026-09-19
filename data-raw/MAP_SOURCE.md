@@ -1,65 +1,51 @@
-# India boundary geometry: source and licence
+# India boundary geometry: source, licence and reproducibility
 
-`india_states_map.rds` in this directory is the India states/union-territories
-boundary layer used by this package's mapping examples.
+`data-raw/india_states_map.rds` (packaged as `india_map`) is the India
+states/union-territories boundary layer used by BharatViz's choropleth.
 
 ## Source
-
 - **Provider:** SimpleMaps ([simplemaps.com/gis/country/in](https://simplemaps.com/gis/country/in))
-- **File:** state/admin-1 level GeoJSON, free tier
+- **Direct file:** state/admin-1 GeoJSON, free tier
   (`https://simplemaps.com/static/svg/country/in/admin1/in.json`)
 - **Retrieved:** 2026-09-17
 - **Licence:** Creative Commons Attribution 4.0 (CC BY 4.0) —
-  <https://creativecommons.org/licenses/by/4.0/>
+  <https://creativecommons.org/licenses/by/4.0/> (the SimpleMaps free tier is
+  distributed under CC BY 4.0; attribution required, no endorsement implied).
 
-## Attribution
+## Attribution (as shown in the app)
+> Boundaries: SimpleMaps, CC BY 4.0. A boundary depiction here is not an official
+> Government of India map.
 
-> Map geometry: SimpleMaps, used under CC BY 4.0; package-specific data and
-> visualisation by Rahul Shukla.
+SimpleMaps does not endorse this project. All renaming, crosswalking, validation
+and format conversion is the author's own work and is not warranted by SimpleMaps.
 
-SimpleMaps does not endorse this package. All renaming, crosswalking,
-validation, and format conversion described below is the package author's
-own work and is not reviewed or warranted by SimpleMaps.
+## Reproducibility
+- **Build script (source of truth):** `data-raw/build_india_map.R`. It downloads
+  the GeoJSON fresh (a browser User-Agent is required; the source 403s R's default
+  agent), sets/validates CRS EPSG:4326, applies `st_make_valid()`, crosswalks the
+  state names/codes used across this ecosystem, asserts exactly 36 valid non-empty
+  units, and writes `data-raw/india_states_map.rds`. Re-run it from the package
+  root, then re-run `data-raw/build_data.R`.
+- **Prepared input (checksum-pinned):** because the build is network-dependent, the
+  prepared RDS is vendored so the package build is deterministic:
+  - file: `data-raw/india_states_map.rds`
+  - SHA-256: `b8b6d0c5cd27e40912e4a24a789ce593ed4d06ea81e5f4f45b142d574d2d7324`
+  - This RDS is byte-identical to the one produced/validated for the `asi`/`plfs`
+    packages from the same source and script.
 
-## What was done to the source file
-
-The build script, `region-codes/build_india_map.R`, is the single source of
-truth for these steps and can be re-run at any time to regenerate
-`india_states_map.rds`:
-
-1. **Download.** Fetches the GeoJSON directly from the URL above.
-2. **CRS.** Confirmed/set to EPSG:4326 (WGS84).
-3. **Geometry validity.** `sf::st_make_valid()` applied; the result is
-   checked to confirm every geometry is valid and non-empty.
-4. **Simplification.** None applied by this package. SimpleMaps' free-tier
-   file is already simplified upstream ("web-optimized... minimal loss of
-   detail" per the source page); no further generalisation is layered on
-   top of it here.
-5. **Name crosswalk.** Two outdated names in the source are corrected to
-   the names already used across ASI/ASUSE/PLFS:
-   - `Orissa` → `Odisha`
-   - `Uttaranchal` → `Uttarakhand`
-   - The diacritic variant `Dādra and Nagar Haveli and Damān and Diu` is
-     normalised to `Dadra and Nagar Haveli and Daman and Diu`.
-6. **State-code crosswalk.** The existing numeric `state_code` scheme
-   already used by ASI, ASUSE, and PLFS (`"01"`–`"37"`, with `"26"`
-   intentionally retired) is preserved exactly. SimpleMaps' own alpha `id`
-   codes (e.g. `INJK`, `INLA`) are **not** used or carried over.
-7. **Validation.** The script asserts, and will error out if any of the
-   following do not hold: exactly 36 administrative units; every source
-   unit matched to a crosswalk entry with none left over in either
-   direction; no duplicate `state_name` or `state_code`; no invalid or
-   empty geometries; final CRS is EPSG:4326.
+## Kashmir / northern boundary
+Unlike the Natural Earth / `d3po::subnational` geometry this replaces (which
+follows only the Line of Control / Line of Actual Control), the SimpleMaps
+Jammu & Kashmir and Ladakh polygons extend to the **complete India-claimed
+extent** (the source's stated coverage; verified visually against the rendered
+map, see `docs/BOUNDARY_CHECK.md`). This is a geometry-only choice; no political
+prose is added.
 
 ## Result
-
-A single `sf` object with columns `state_name`, `state_code`, `geometry`,
-36 rows, EPSG:4326, all geometries valid and non-empty — the same interface
-the package's code has always used.
+An `sf` object: `state_name`/`region`, `state_code`, `geometry`; 36 rows;
+EPSG:4326; all geometries valid and non-empty.
 
 ## Licence note
-
-This CC BY 4.0 attribution applies specifically to the map geometry
-component described above. It does not change the package's own overall
-licence (see `LICENSE.md`), which continues to apply to the code and to the
-package's own tidied survey data.
+The CC BY 4.0 attribution applies to the map geometry. It does not change the
+package's own code licence (Apache-2.0) or the NFHS data terms
+(see `NFHS_SOURCE.md`).
