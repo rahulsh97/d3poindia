@@ -48,9 +48,12 @@ test_that("missing states join to NA, never to zero (missing != zero)", {
   expect_false(isTRUE(kerala == 0))            # never silently zero
 })
 
-test_that("map helper renders a genuinely missing state as NA/no-data and builds a widget", {
-  # Force Kerala missing to exercise the grey / 'no data' output path that the
-  # current complete data never triggers on its own.
+test_that("map helper marks a genuinely missing state NA/no-data and builds a widget", {
+  # Force Kerala missing to exercise the 'no data' path the complete data never
+  # triggers. NOTE: fill colours are resolved in the browser by the d3po binding,
+  # so this test asserts NA-preservation (never 0) + that po_geomap builds; the
+  # *rendered* grey (#cccccc) is confirmed at render level in docs/RENDER_CHECK.md
+  # (reproduce with data-raw/check_missing_render.R).
   d <- nfhs_map_data("women_anaemia", drop = "Kerala")
   ker_val <- d$value[d$region == "Kerala"]
   ker_lab <- d$label[d$region == "Kerala"]

@@ -20,18 +20,25 @@ SimpleMaps does not endorse this project. All renaming, crosswalking, validation
 and format conversion is the author's own work and is not warranted by SimpleMaps.
 
 ## Reproducibility
-- **Build script (source of truth):** `data-raw/build_india_map.R`. It downloads
-  the GeoJSON fresh (a browser User-Agent is required; the source 403s R's default
-  agent), sets/validates CRS EPSG:4326, applies `st_make_valid()`, crosswalks the
-  state names/codes used across this ecosystem, asserts exactly 36 valid non-empty
-  units, and writes `data-raw/india_states_map.rds`. Re-run it from the package
-  root, then re-run `data-raw/build_data.R`.
-- **Prepared input (checksum-pinned):** because the build is network-dependent, the
-  prepared RDS is vendored so the package build is deterministic:
+The authoritative, reproducible input is the **checksum-pinned prepared RDS**, not
+the network build. The package build never needs the network.
+- **Prepared input (pinned):**
   - file: `data-raw/india_states_map.rds`
   - SHA-256: `b8b6d0c5cd27e40912e4a24a789ce593ed4d06ea81e5f4f45b142d574d2d7324`
-  - This RDS is byte-identical to the one produced/validated for the `asi`/`plfs`
-    packages from the same source and script.
+  - Verify: `Rscript -e 'cat(tools::sha256sum("data-raw/india_states_map.rds"))'`
+    (or `sha256sum data-raw/india_states_map.rds`) must equal the value above.
+  - Byte-identical to the RDS produced/validated for the `asi`/`plfs` packages from
+    the same source and script.
+- **Build script (refresh from source):** `data-raw/build_india_map.R`. Dev-only
+  dependencies (not package Imports): **httr, sf, dplyr** (built with R 4.5.0,
+  sf 1.0.22, dplyr 1.1.4). It downloads the GeoJSON fresh (a browser User-Agent is
+  required; the source 403s R's default agent), sets/validates CRS EPSG:4326,
+  applies `st_make_valid()`, crosswalks names/codes, asserts exactly 36 valid
+  non-empty units, and writes `data-raw/india_states_map.rds`.
+- **Note on determinism:** the build is network-dependent — SimpleMaps may update
+  the upstream file, so a fresh run is a best-effort refresh, not a byte-exact
+  rebuild. If you refresh, re-run `data-raw/build_data.R` and update the SHA-256
+  above.
 
 ## Kashmir / northern boundary
 Unlike the Natural Earth / `d3po::subnational` geometry this replaces (which

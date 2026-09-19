@@ -34,22 +34,40 @@ microdata and no person-level records** — only published state percentages.
   any state absent from the data as **grey (no data)** — never as zero.
 
 ## Verification performed (see `data-raw/verify_nfhs.R`)
-The vendored file is a third-party transcription, so it is treated as an extract
-to be validated, not as the primary source. `verify_nfhs.R` runs and passes:
-1. **National anchor vs official.** The extract's India totals match the official
-   NFHS-5 fact sheet exactly: women 15-49 anaemic **57.0%** (NFHS-4 53.1%),
-   women with 10+ years schooling **41.0%** (NFHS-4 35.7%). The 53→57% anaemia
-   rise is corroborated by the MoHFW compendium and independent reporting.
-2. **Urban/rural/total consistency for all 36 states.** Each published state total
-   lies within `[min(urban,rural), max(urban,rural)]` (a population-weighted blend
-   cannot fall outside its parts) — a row-by-row transcription-error check.
-3. **Completeness + range.** 36/36 states present, no NA, all values in `[0,100]`.
-4. **Official spot-check.** The extreme value — Ladakh all-women anaemia
-   **92.8%** (the highest in India) — matches the official Ladakh UT fact sheet.
+The vendored file is a third-party transcription (DOI-backed: Harvard Dataverse
+10.7910/DVN/42WNZF, citing rchiips.org/nfhs), so it is treated as an extract to be
+validated, not as the primary source.
 
-The **definitive reference remains the official fact sheets** (compendium below);
-this extract is validated for use as descriptive context, not offered as a
-substitute for the official publication.
+**Checked directly against official sources (the values independently verified):**
+- **National totals, both indicators** — the extract's India totals match the
+  official NFHS-5 fact sheet exactly: women 15-49 anaemic **57.0%** (NFHS-4 53.1%),
+  women with 10+ years schooling **41.0%** (NFHS-4 35.7%). The 53→57% anaemia rise
+  is corroborated by the MoHFW compendium and independent reporting.
+- **Ladakh, anaemia** — the extreme value, all-women anaemia **92.8%** (highest in
+  India), matches the official Ladakh UT fact sheet.
+
+**Internal-consistency checks across all 36 states/UTs (NOT a comparison to an
+official per-state table):**
+- **Urban/rural/total consistency** — each published state total lies within
+  `[min(urban,rural), max(urban,rural)]` (a population-weighted blend cannot fall
+  outside its parts): a row-by-row transcription-error check.
+- **Completeness + range** — 36/36 states present, no NA, all values in `[0,100]`.
+
+**Not done in this pass — full official per-state reconciliation.** An official
+machine-readable **anaemia** table exists (data.gov.in / Rajya Sabha Session 265,
+Q1699: `RS_Session_265_AU_1699_A.csv`) but was **not machine-accessible from this
+environment** (Cloudflare/SPA gating; the datastore API needs a key; the
+compendium is PDF-only and `pdftools` is unavailable). No equally clean official
+per-state **schooling** table was located. **Therefore this document does not claim
+"all 36 states verified against official values"** — only the national totals and
+Ladakh were checked against official sources; the remaining 34 states rest on the
+DOI-backed extract plus the internal-consistency checks above.
+
+**To complete the reconciliation**, a reviewer with a data.gov.in API key (or the
+official state fact-sheet PDFs) should diff all 36 values for both indicators and
+record any discrepancies here. The **definitive reference remains the official fact
+sheets** (compendium below); this extract is validated for use as descriptive
+context, not offered as a substitute for the official publication.
 
 ## Reuse rights
 - The indicator values are **official Government of India statistics** published in

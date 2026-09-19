@@ -12,12 +12,19 @@ remedy for a separate, approved decision.
   filtered to employed persons. Wages and economic-status codes were dropped in
   pre-processing; what remains is broad categorical attributes only.
 
-## Disclosure / re-identification risk: LOW
+## Disclosure / re-identification risk: LOW (residual, not zero)
 - No direct identifiers (no name, no household/person id), **no GPS/location beyond
   state**, no exact age (banded), no continuous quasi-identifiers.
-- Cells defined by state x age-band x gender x rural/urban x education-band x
-  employment-type contain many individuals; single-individual re-identification is
-  not feasible. PLFS is itself a public-use microdata product.
+- The quasi-identifier set is state x age-band x gender x rural/urban x
+  education-band x employment-type. Most such cells contain many individuals, so
+  re-identification is **unlikely**, but the risk is **not zero**: rare
+  combinations (e.g. a small state/UT crossed with an uncommon education x
+  employment profile) can yield small or single-record cells, and, in principle,
+  linkage with external datasets sharing these attributes could raise risk. A
+  formal k-anonymity / small-cell audit was **not** performed here.
+- Mitigating context: these are de-identified records derived from PLFS, itself a
+  public-use microdata product. The residual disclosure risk is low; the licensing
+  question below is the stronger reason to remove the file.
 
 ## Licensing / redistribution: the real concern (UNRESOLVED)
 - The records derive from MoSPI PLFS unit-level data, whose terms of use govern

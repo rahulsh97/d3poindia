@@ -13,10 +13,15 @@
 #                the package author's own work and is not reviewed or
 #                warranted by SimpleMaps.
 #
-# This script is idempotent and network-dependent: it downloads the source
-# file fresh each time it is run and does not commit the raw GeoJSON to the
-# repository. Re-run it from the package root to refresh
-# data-raw/india_states_map.rds (then re-run data-raw/build_data.R).
+# Requires (dev-only; not package Imports): httr, sf, dplyr. Built and verified
+# with R 4.5.0, sf 1.0.22, dplyr 1.1.4, httr (>= 1.4). Network access required.
+#
+# Reproducibility model: this build is NETWORK-DEPENDENT — SimpleMaps may update
+# the upstream file, so a fresh run is a best-effort *refresh*, not a byte-exact
+# rebuild. The authoritative, reproducible input is the checksum-pinned prepared
+# RDS (data-raw/india_states_map.rds; SHA-256 in MAP_SOURCE.md); the package build
+# never needs the network. Re-run this only to intentionally refresh from source,
+# then re-run data-raw/build_data.R and update the checksum in MAP_SOURCE.md.
 #
 # Why SimpleMaps: unlike the Natural Earth geometry this file replaces,
 # SimpleMaps' Jammu and Kashmir and Ladakh polygons extend to the complete
