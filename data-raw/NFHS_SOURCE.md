@@ -33,41 +33,64 @@ microdata and no person-level records** — only published state percentages.
 - All 36 states/UTs have non-missing values for both indicators. The app renders
   any state absent from the data as **grey (no data)** — never as zero.
 
-## Verification performed (see `data-raw/verify_nfhs.R`)
+## Verification performed
 The vendored file is a third-party transcription (DOI-backed: Harvard Dataverse
-10.7910/DVN/42WNZF, citing rchiips.org/nfhs), so it is treated as an extract to be
-validated, not as the primary source.
+10.7910/DVN/42WNZF, citing rchiips.org/nfhs). Its plotted values have now been
+compared, for **all 36 states/UTs and both indicators**, against the **official
+NFHS-5 fact sheets** in the MoHFW/IIPS compendia (Phase I = `FS_P1.pdf`,
+Phase II = `FS_P2.pdf`; the state total is the NFHS-5 "Total" column).
 
-**Checked directly against official sources (the values independently verified):**
-- **National totals, both indicators** — the extract's India totals match the
-  official NFHS-5 fact sheet exactly: women 15-49 anaemic **57.0%** (NFHS-4 53.1%),
-  women with 10+ years schooling **41.0%** (NFHS-4 35.7%). The 53→57% anaemia rise
-  is corroborated by the MoHFW compendium and independent reporting.
-- **Ladakh, anaemia** — the extreme value, all-women anaemia **92.8%** (highest in
-  India), matches the official Ladakh UT fact sheet.
+**Result: 0 mismatches** across 36 states x 2 indicators (tolerance 0.05pp). Every
+value used by the app equals the official fact-sheet total. National anchor also
+matches (anaemia 57.0 pct, schooling 41.0 pct). Page references (1-based) below.
 
-**Internal-consistency checks across all 36 states/UTs (NOT a comparison to an
-official per-state table):**
-- **Urban/rural/total consistency** — each published state total lies within
-  `[min(urban,rural), max(urban,rural)]` (a population-weighted blend cannot fall
-  outside its parts): a row-by-row transcription-error check.
-- **Completeness + range** — 36/36 states present, no NA, all values in `[0,100]`.
+Supporting internal checks (`data-raw/verify_nfhs.R`, all pass): urban/rural/total
+consistency and completeness/range for all 36 states.
 
-**Not done in this pass — full official per-state reconciliation.** An official
-machine-readable **anaemia** table exists (data.gov.in / Rajya Sabha Session 265,
-Q1699: `RS_Session_265_AU_1699_A.csv`) but was **not machine-accessible from this
-environment** (Cloudflare/SPA gating; the datastore API needs a key; the
-compendium is PDF-only and `pdftools` is unavailable). No equally clean official
-per-state **schooling** table was located. **Therefore this document does not claim
-"all 36 states verified against official values"** — only the national totals and
-Ladakh were checked against official sources; the remaining 34 states rest on the
-DOI-backed extract plus the internal-consistency checks above.
+### Fact-sheet reconciliation (all 36; page refs)
+| State/UT | Anaemia % | src | Schooling 10+ % | src | Match |
+|---|--:|---|--:|---|:--:|
+| Andaman and Nicobar | 57.5 | FS_P1 p.13 | 52.5 | FS_P1 p.11 | OK |
+| Andhra Pradesh | 58.8 | FS_P1 p.19 | 39.6 | FS_P1 p.17 | OK |
+| Arunachal Pradesh | 40.3 | FS_P2 p.15 | 39.4 | FS_P2 p.13 | OK |
+| Assam | 65.9 | FS_P1 p.25 | 29.6 | FS_P1 p.23 | OK |
+| Bihar | 63.5 | FS_P1 p.31 | 28.8 | FS_P1 p.29 | OK |
+| Chandigarh | 60.3 | FS_P2 p.81 | 59.6 | FS_P2 p.79 | OK |
+| Chhattisgarh | 60.8 | FS_P2 p.21 | 36.9 | FS_P2 p.19 | OK |
+| Dadra and Nagar Haveli and Daman and Diu | 62.5 | FS_P1 p.37 | 35.8 | FS_P1 p.35 | OK |
+| Delhi | 49.9 | FS_P2 p.87 | 59.7 | FS_P2 p.85 | OK |
+| Goa | 39.0 | FS_P1 p.43 | 71.5 | FS_P1 p.41 | OK |
+| Gujarat | 65.0 | FS_P1 p.49 | 33.8 | FS_P1 p.47 | OK |
+| Haryana | 60.4 | FS_P2 p.27 | 49.5 | FS_P2 p.25 | OK |
+| Himachal Pradesh | 53.0 | FS_P1 p.55 | 65.9 | FS_P1 p.53 | OK |
+| Jammu and Kashmir | 65.9 | FS_P1 p.61 | 51.3 | FS_P1 p.59 | OK |
+| Jharkhand | 65.3 | FS_P2 p.33 | 33.2 | FS_P2 p.31 | OK |
+| Karnataka | 47.8 | FS_P1 p.67 | 50.2 | FS_P1 p.65 | OK |
+| Kerala | 36.3 | FS_P1 p.73 | 77.0 | FS_P1 p.71 | OK |
+| Ladakh | 92.8 | FS_P1 p.85 | 50.0 | FS_P1 p.83 | OK |
+| Lakshadweep | 25.8 | FS_P1 p.79 | 67.8 | FS_P1 p.77 | OK |
+| Madhya Pradesh | 54.7 | FS_P2 p.39 | 29.3 | FS_P2 p.37 | OK |
+| Maharashtra | 54.2 | FS_P1 p.91 | 50.4 | FS_P1 p.89 | OK |
+| Manipur | 29.4 | FS_P1 p.103 | 48.1 | FS_P1 p.101 | OK |
+| Meghalaya | 53.8 | FS_P1 p.97 | 35.1 | FS_P1 p.95 | OK |
+| Mizoram | 34.8 | FS_P1 p.109 | 50.0 | FS_P1 p.107 | OK |
+| Nagaland | 28.9 | FS_P1 p.115 | 44.4 | FS_P1 p.113 | OK |
+| Odisha | 64.3 | FS_P2 p.45 | 33.0 | FS_P2 p.43 | OK |
+| Puducherry | 55.1 | FS_P2 p.93 | 65.4 | FS_P2 p.91 | OK |
+| Punjab | 58.7 | FS_P2 p.51 | 56.0 | FS_P2 p.49 | OK |
+| Rajasthan | 54.4 | FS_P2 p.57 | 33.4 | FS_P2 p.55 | OK |
+| Sikkim | 42.1 | FS_P1 p.121 | 49.0 | FS_P1 p.119 | OK |
+| Tamil Nadu | 53.4 | FS_P2 p.63 | 56.6 | FS_P2 p.61 | OK |
+| Telangana | 57.6 | FS_P1 p.127 | 45.5 | FS_P1 p.125 | OK |
+| Tripura | 67.2 | FS_P1 p.133 | 23.2 | FS_P1 p.131 | OK |
+| Uttar Pradesh | 50.4 | FS_P2 p.69 | 39.3 | FS_P2 p.67 | OK |
+| Uttarakhand | 42.6 | FS_P2 p.75 | 50.4 | FS_P2 p.73 | OK |
+| West Bengal | 71.4 | FS_P1 p.139 | 32.9 | FS_P1 p.137 | OK |
 
-**To complete the reconciliation**, a reviewer with a data.gov.in API key (or the
-official state fact-sheet PDFs) should diff all 36 values for both indicators and
-record any discrepancies here. The **definitive reference remains the official fact
-sheets** (compendium below); this extract is validated for use as descriptive
-context, not offered as a substitute for the official publication.
+*Method:* extracted with `pypdf` from the official compendia; per state the NFHS-5
+"Total" column for line "16. Women with 10 or more years of schooling (%)" and line
+"95. All women age 15-49 years who are anaemic (%)". The compendium PDFs are the
+definitive reference.
 
 ## Reuse rights
 - The indicator values are **official Government of India statistics** published in
