@@ -1,0 +1,82 @@
+# Data-integrity tests for the BharatViz NFHS-5 aggregate layer.
+# These are release gates: denominators/units, source vintage, state-key
+# coverage, missing-vs-zero, and value ranges.
+
+test_that("nfhs_state has the expected indicators, each covering all 36 states", {
+  d <- d3poindia::nfhs_state
+  expect_setequal(unique(d$indicator), c("women_anaemia", "women_schooling10"))
+  for (ind in unique(d$indicator)) {
+    s <- d[d$indicator == ind, ]
+    expect_equal(nrow(s), 36L)                 # one row per state/UT
+    expect_equal(length(unique(s$region)), 36L)
+    expect_false(any(is.na(s$value)))          # source is complete
+  }
+})
+
+test_that("values are valid percentages with documented units and round", {
+  d <- d3poindia::nfhs_state
+  expect_true(all(d$unit == "%"))
+  expect_true(all(d$value >= 0 & d$value <= 100))
+  expect_true(all(d$round == "NFHS-5 (2019-21)"))
+  expect_true(all(nzchar(d$source)))
+  expect_true(all(d$higher_is %in% c("better", "worse")))
+})
+
+test_that("every nfhs_state region matches a boundary in india_map (state-key coverage)", {
+  d <- d3poindia::nfhs_state
+  g <- d3poindia::india_map
+  expect_true(all(d$region %in% g$region))
+  # india_map is the authoritative 36-state boundary layer
+  expect_equal(nrow(g), 36L)
+})
+
+test_that("india_map is a valid sf layer in EPSG:4326 with a region key", {
+  g <- d3poindia::india_map
+  expect_s3_class(g, "sf")
+  expect_true(all(c("region", "geometry") %in% names(g)))
+  expect_equal(sf::st_crs(g)$epsg, 4326L)
+})
+
+test_that("missing states join to NA, never to zero (missing != zero)", {
+  g <- d3poindia::india_map
+  # Drop one state from the indicator to simulate a gap.
+  sel <- d3poindia::nfhs_state[d3poindia::nfhs_state$indicator == "women_anaemia", ]
+  sel <- sel[sel$region != "Kerala", c("region", "value")]
+  d <- dplyr::left_join(g, sel, by = "region")
+  kerala <- d$value[d$region == "Kerala"]
+  expect_true(is.na(kerala))                   # missing -> NA
+  expect_false(isTRUE(kerala == 0))            # never silently zero
+})
+
+test_that("map helper marks a genuinely missing state NA/no-data and builds a widget", {
+  # Force Kerala missing to exercise the 'no data' path the complete data never
+  # triggers. NOTE: fill colours are resolved in the browser by the d3po binding,
+  # so this test asserts NA-preservation (never 0) + that po_geomap builds; the
+  # *rendered* grey (#cccccc) is confirmed at render level in docs/RENDER_CHECK.md
+  # (reproduce with data-raw/check_missing_render.R).
+  d <- nfhs_map_data("women_anaemia", drop = "Kerala")
+  ker_val <- d$value[d$region == "Kerala"]
+  ker_lab <- d$label[d$region == "Kerala"]
+  expect_true(is.na(ker_val))                       # missing -> NA, not 0
+  expect_false(isTRUE(ker_val == 0))
+  expect_match(ker_lab, "no data")
+  # non-missing states are unaffected
+  expect_false(any(is.na(d$value[d$region != "Kerala"])))
+  # the actual d3po output path builds without error with the NA present
+  obj <- d3po::po_geomap(
+    d3po::d3po(d),
+    d3po::daes(group = region, color = viridisLite::viridis(5),
+               size = value, gradient = TRUE, tooltip = label)
+  )
+  expect_true(inherits(obj, "d3po"))
+})
+
+test_that("known NFHS-5 reference values are preserved (guards transcription errors)", {
+  d <- d3poindia::nfhs_state
+  ker <- d$value[d$indicator == "women_schooling10" & d$region == "Kerala"]
+  bih <- d$value[d$indicator == "women_schooling10" & d$region == "Bihar"]
+  ldk <- d$value[d$indicator == "women_anaemia"    & d$region == "Ladakh"]
+  expect_equal(ker, 77.0, tolerance = 0.1)     # Kerala schooling highest
+  expect_true(bih < 35)                        # Bihar schooling low
+  expect_equal(ldk, 92.8, tolerance = 0.1)     # Ladakh anaemia highest
+})
