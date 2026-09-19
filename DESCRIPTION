@@ -1,13 +1,16 @@
 Package: d3poindia
-Title: D3po India Shiny Application
-Version: 0.0.0.9000
-Authors@R: 
-    person(given = "firstname",
-           family = "lastname",
+Title: BharatViz: India State Context Maps
+Version: 0.2.0
+Authors@R:
+    person(given = "Rahul",
+           family = "Shukla",
            role = c("aut", "cre"),
-           email = "your@email.com")
-Description: Uses PLFS employment data to visualise employment patterns across India.
-    Built with the D3po framework.
+           email = "rahulshuklakrc@gmail.com")
+Description: BharatViz visualises published, aggregate state-level indicators for
+    India (National Family Health Survey, NFHS-5) as descriptive regional context.
+    It ships no microdata. Part of the Growth & Work Atlas; the India panel is
+    descriptive context and is not joined to any industry, wage, or productivity
+    measure. Built with the D3po framework.
 License: Apache License (>= 2)
 Imports: 
     config,
@@ -20,6 +23,9 @@ Imports:
     shiny,
     tabler,
     viridisLite
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
