@@ -222,6 +222,86 @@ app_server <- function(input, output, session) {
     }
   })
 
+  # ---- Productivity-Pay Sensitivity Lab (36-state, single-year, descriptive) --
+  lab_all <- reactive(pp_lab_data())
+  lab_sel <- reactive({
+    d <- lab_all()
+    d[d$region %in% input$lab_states, , drop = FALSE]
+  })
+
+  output$pp_scatter <- renderPlot({
+    d <- lab_all()
+    fit <- pp_fit(d)
+    is_sel <- d$region %in% input$lab_states
+    op <- graphics::par(mar = c(4.6, 4.6, 1.2, 1.0))
+    on.exit(graphics::par(op), add = TRUE)
+    graphics::plot(d$productivity, d$pay, type = "n",
+                   xlab = "Productivity: net value added per worker (Rs lakh, current prices)",
+                   ylab = "Pay: wages per worker (Rs lakh, current prices)")
+    graphics::grid(col = "#e6e6e6")
+    if (!is.null(fit)) {
+      graphics::abline(a = fit$intercept, b = fit$slope, col = "#0f5c6b", lwd = 2)
+    }
+    fs <- pp_fit(lab_sel())
+    if (!is.null(fs)) {
+      graphics::abline(a = fs$intercept, b = fs$slope, col = "#b5651d", lwd = 2, lty = 2)
+    }
+    graphics::points(d$productivity[!is_sel], d$pay[!is_sel], pch = 19,
+                     col = "#9bb3bb", cex = 1.05)
+    graphics::points(d$productivity[is_sel], d$pay[is_sel], pch = 19,
+                     col = "#b5651d", cex = 1.35)
+    if (any(is_sel)) {
+      graphics::text(d$productivity[is_sel], d$pay[is_sel], d$region[is_sel],
+                     pos = 3, cex = 0.75, col = "#7a4512")
+    }
+    graphics::legend("topleft", bty = "n", cex = 0.82,
+                     legend = c("All 36 states (fit)", "Selected states (fit)"),
+                     col = c("#0f5c6b", "#b5651d"), lwd = 2, lty = c(1, 2))
+  })
+
+  output$pp_stats <- renderUI({
+    fa <- pp_fit(lab_all()); fs <- pp_fit(lab_sel())
+    row <- function(f, lab) {
+      if (is.null(f)) {
+        return(sprintf("<tr><td>%s</td><td colspan='4' style='color:#999;'>need &ge; 3 states</td></tr>", lab))
+      }
+      sprintf("<tr><td>%s</td><td>%d</td><td>%.3f</td><td>%.2f</td><td>%.2f</td></tr>",
+              lab, f$n, f$slope, f$r, f$r2)
+    }
+    HTML(paste0(
+      "<table style='width:100%;font-size:0.84rem;border-collapse:collapse;'>",
+      "<thead><tr style='color:#666;text-align:left;'><th>Set</th><th>n</th>",
+      "<th>slope</th><th>r</th><th>R&sup2;</th></tr></thead><tbody>",
+      row(fa, "All 36"),
+      row(fs, paste0("Selected (", length(input$lab_states), ")")),
+      "</tbody></table>",
+      "<p style='font-size:0.8rem;color:#666;margin-top:6px;'>Slope = extra Rs lakh of pay per +1 Rs lakh of productivity, across states. Descriptive association only.</p>"
+    ))
+  })
+
+  output$pp_influence <- renderUI({
+    inf <- pp_influence(lab_all())
+    if (is.null(inf)) return(HTML("<em>Not enough data.</em>"))
+    top <- utils::head(inf, 10L)
+    mx <- max(abs(inf$dslope), na.rm = TRUE)
+    rows <- vapply(seq_len(nrow(top)), function(i) {
+      w   <- if (mx > 0) round(100 * abs(top$dslope[i]) / mx, 1) else 0
+      col <- if (top$dslope[i] >= 0) "#0f5c6b" else "#b5651d"
+      sgn <- if (top$dslope[i] >= 0) "+" else "-"
+      sprintf(
+        paste0("<tr><td style='padding-right:8px;'>%s</td>",
+               "<td style='width:58%%;'><div role='img' aria-label='%s influence %s%.4f' style='background:%s;height:11px;width:%s%%;border-radius:2px;display:inline-block;'></div></td>",
+               "<td style='text-align:right;font-variant-numeric:tabular-nums;padding-left:8px;'>%s%.4f</td></tr>"),
+        top$region[i], top$region[i], sgn, abs(top$dslope[i]), col, w, sgn, abs(top$dslope[i]))
+    }, character(1))
+    HTML(paste0(
+      "<table style='width:100%;font-size:0.84rem;border-collapse:collapse;'>",
+      "<caption style='text-align:left;color:#666;font-size:0.82em;'>",
+      "Signed influence = slope(all 36) &minus; slope(without the state); ",
+      "positive (blue) = the state raises the fitted slope, negative (amber) = lowers it. Top 10 by magnitude.</caption>",
+      "<tbody>", paste0(rows, collapse = ""), "</tbody></table>"))
+  })
+
   # ---- Download the plotted aggregate --------------------------------------
   output$download_data <- downloadHandler(
     filename = function() {
