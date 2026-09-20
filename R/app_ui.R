@@ -124,6 +124,49 @@ app_ui <- function(request) {
                 shiny::plotOutput("asi_scatter", height = "460px")
               )
             )
+          ),
+          # ---- Productivity-Pay Sensitivity Lab -----------------------------
+          # 36-state, single-year, descriptive. No FE / clustering / causal claim.
+          fluidRow(
+            column(
+              12,
+              card(
+                tags$h3("Productivity-Pay Sensitivity Lab"),
+                tags$p(class = "text-muted", style = "font-size:0.9em;",
+                       "A ", tags$strong("36-state, single-year, descriptive"),
+                       " look at how average ", tags$strong("pay"),
+                       " (wages per worker) moves with ", tags$strong("productivity"),
+                       " (net value added per worker) across states - ASI 2023-24, current prices. ",
+                       "One ordinary least-squares line through 36 points: an ",
+                       tags$strong("association only"),
+                       " - no fixed effects, no clustering, no causal claim, no invented data."),
+                shiny::selectizeInput(
+                  "lab_states", "Compare selected states vs all 36 (optional):",
+                  choices = sort(unique(as.character(d3poindia::asi_state$region))),
+                  selected = c("Maharashtra", "Tamil Nadu", "Gujarat"),
+                  multiple = TRUE, width = "100%",
+                  options = list(placeholder = "Search states to compare")
+                ),
+                # Full-width plot (a plotOutput nested in a sub-column renders at
+                # width 0 on first paint in this layout; keep it top-level).
+                shiny::plotOutput("pp_scatter", height = "420px"),
+                fluidRow(
+                  column(
+                    5,
+                    tags$h4("All 36 vs selected", style = "margin-top:0.7rem;"),
+                    shiny::htmlOutput("pp_stats")
+                  ),
+                  column(
+                    7,
+                    tags$h4("Leave-one-state-out influence", style = "margin-top:0.7rem;"),
+                    tags$p(class = "text-muted", style = "font-size:0.86em;",
+                           "How much the fitted slope changes when each state is removed ",
+                           "(jackknife). Larger bars = more influential; the sign shows direction."),
+                    shiny::uiOutput("pp_influence")
+                  )
+                )
+              )
+            )
           )
         )
       ),

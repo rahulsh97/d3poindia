@@ -24,6 +24,7 @@ Imports:
     rlang,
     sf,
     shiny,
+    stats,
     tabler,
     utils,
     viridisLite
