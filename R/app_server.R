@@ -83,9 +83,18 @@ app_server <- function(input, output, session) {
       pa <- value_at(first, "nva_per_worker")
       pb <- value_at(second, "nva_per_worker")
       if (all(is.finite(c(wa, wb, pa, pb)))) {
-        tags$p(class = "atlas-comparison",
-               sprintf("%s versus %s: the difference in wages per worker is Rs %.2f lakh; the difference in net value added per worker is Rs %.2f lakh.",
-                       first, second, abs(wa - wb), abs(pa - pb)))
+        lead <- function(x, y) {
+          if (abs(x - y) < 0.005) "about the same in both states"
+          else if (x > y) paste0("higher in ", first)
+          else paste0("higher in ", second)
+        }
+        tags$div(
+          class = "atlas-comparison",
+          tags$strong(sprintf("Read the comparison: value added per worker is %s; wages per worker are %s.",
+                              lead(pa, pb), lead(wa, wb))),
+          tags$div(sprintf("Absolute gaps: Rs %.2f lakh in value added per worker and Rs %.2f lakh in wages per worker.",
+                           abs(pa - pb), abs(wa - wb)))
+        )
       }
     }
     tagList(
