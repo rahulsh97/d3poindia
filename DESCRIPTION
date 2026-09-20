@@ -7,23 +7,28 @@ Authors@R:
            role = c("aut", "cre"),
            email = "rahulshuklakrc@gmail.com")
 Description: BharatViz visualises published, aggregate state-level indicators for
-    India (National Family Health Survey, NFHS-5) as descriptive regional context.
-    It ships no microdata. Part of the Growth & Work Atlas; the India panel is
-    descriptive context and is not joined to any industry, wage, or productivity
-    measure. Built with the D3po framework.
+    India as descriptive regional context. Two separate layers: health/education
+    context (National Family Health Survey, NFHS-5, 2019-21) and factory-sector
+    productivity & pay (Annual Survey of Industries, ASI 2023-24, current prices).
+    It ships no microdata. Part of the Growth & Work Atlas; the layers are shown
+    separately and are not joined to each other, and differences are descriptive,
+    not causal. Built with the D3po framework.
 License: Apache License (>= 2)
-Imports: 
+Imports:
     config,
     d3po,
-    dplyr,
     golem,
+    graphics,
+    grDevices,
     magrittr,
     rlang,
     sf,
     shiny,
     tabler,
+    utils,
     viridisLite
 Suggests:
+    dplyr,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Encoding: UTF-8

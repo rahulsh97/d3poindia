@@ -21,20 +21,24 @@ app_ui <- function(request) {
           fluidRow(
             column(
               12,
-              h1("BharatViz - India state context (NFHS-5)"),
+              h1("BharatViz - India state context"),
               tags$p(
                 class = "text-muted",
                 "Part of the Growth & Work Atlas question: ",
                 tags$em("when an industry produces more value per worker, do pay and jobs improve too, and where do gains fail to reach people?"),
-                " This India panel shows ", tags$strong("descriptive regional context"),
-                " from the National Family Health Survey (NFHS-5, 2019-21). ",
-                "It is ", tags$strong("not"), " an industrial outcome and is ",
-                tags$strong("not"), " joined to any industry, wage, or productivity measure."
+                " Two ", tags$strong("separate"), " descriptive layers, selected below: ",
+                tags$strong("health & education context"), " (National Family Health Survey, NFHS-5, 2019-21) and ",
+                tags$strong("factory-sector productivity & pay"),
+                " (Annual Survey of Industries, ASI 2023-24, current prices)."
               ),
               tags$p(
                 class = "text-muted",
-                tags$strong("Read the map as context only:"),
-                " co-location of a health/education indicator with economic activity is descriptive, not causal."
+                tags$strong("Read as descriptive only:"),
+                " the two layers are ", tags$strong("not joined to each other"),
+                "; ASI covers the ", tags$strong("registered factory sector only"),
+                " (predominantly manufacturing, also covered electricity/gas/water/repair units; not the whole economy and not the unorganised sector) ",
+                "and industry composition differs across states; ",
+                "current-price levels are not real growth and no relationship shown here is causal."
               )
             )
           ),
@@ -44,10 +48,16 @@ app_ui <- function(request) {
               card(
                 shiny::selectInput(
                   "indicator",
-                  "Indicator (NFHS-5, state total):",
-                  choices = c(
-                    "Women 15-49 who are anaemic (%)" = "women_anaemia",
-                    "Women with 10+ years of schooling (%)" = "women_schooling10"
+                  "Indicator (state level):",
+                  choices = list(
+                    "Health & education context (NFHS-5, 2019-21)" = c(
+                      "Women 15-49 who are anaemic (%)" = "women_anaemia",
+                      "Women with 10+ years of schooling (%)" = "women_schooling10"
+                    ),
+                    "Factory-sector productivity & pay (ASI 2023-24, current prices)" = c(
+                      "Net value added per worker (Rs lakh/worker)" = "nva_per_worker",
+                      "Wages per worker (Rs lakh/worker)" = "wages_per_worker"
+                    )
                   ),
                   selected = "women_schooling10"
                 ),
@@ -96,11 +106,29 @@ app_ui <- function(request) {
                 shiny::htmlOutput("methods")
               )
             )
+          ),
+          # ---- ASI productivity vs pay scatter (current prices) -------------
+          fluidRow(
+            column(
+              12,
+              card(
+                tags$h3("Factory-sector productivity vs pay (ASI 2023-24)"),
+                tags$p(class = "text-muted", style = "font-size:0.9em;",
+                       "Each point is a State/UT: average ",
+                       tags$strong("wages per worker"), " (x) against ",
+                       tags$strong("net value added per worker"), " (y), both in Rs lakh/worker at ",
+                       tags$strong("current prices"), ". ASI registered factory sector, all industries (not the whole economy). ",
+                       "The left panel shows the full range (Sikkim is a small-workforce, high-value-added outlier); ",
+                       "the right panel zooms to the main cluster so the other states are readable. ",
+                       "A descriptive cross-section - not real growth, and not a causal relationship."),
+                shiny::plotOutput("asi_scatter", height = "460px")
+              )
+            )
           )
         )
       ),
       footer = footer(
-        left = "NFHS-5 (2019-21), IIPS/MoHFW | boundaries: SimpleMaps, CC BY 4.0",
+        left = "NFHS-5 (2019-21), IIPS/MoHFW | ASI 2023-24, MoSPI (current prices) | boundaries: SimpleMaps, CC BY 4.0",
         right = shiny::tags$span("BharatViz v0.2.0")
       )
     )
