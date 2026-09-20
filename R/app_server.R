@@ -28,14 +28,97 @@ app_server <- function(input, output, session) {
   # routed to whichever layer (NFHS or ASI) defines it.
   selected <- reactive({
     ind <- input$indicator
-    if (is.null(ind)) ind <- "women_schooling10"
+    if (is.null(ind)) ind <- "nva_per_worker"
     indicator_rows(ind)
+  })
+
+
+  # Searchable state selection drives the two comparable ASI measures, the
+  # ranked view, and the highlighted points. NFHS is presented as a separate
+  # descriptive context layer because its population and survey years differ.
+  focus <- reactive({
+    states <- input$focus_states
+    if (is.null(states)) states <- c("Maharashtra", "Tamil Nadu")
+    head(intersect(states, d3poindia::india_map$region), 2L)
+  })
+
+  output$focus_story <- renderUI({
+    regions <- focus()
+    if (!length(regions)) {
+      return(tags$p(class = "atlas-empty", "Search for a state above to start exploring."))
+    }
+    a <- d3poindia::asi_state
+    value_at <- function(region, ind) {
+      v <- a$value[a$region == region & a$indicator == ind]
+      if (length(v) == 1L && is.finite(v)) v else NA_real_
+    }
+    nva_all <- vapply(regions, value_at, numeric(1), ind = "nva_per_worker")
+    wages_all <- vapply(regions, value_at, numeric(1), ind = "wages_per_worker")
+    state_card <- function(region) {
+      nva <- value_at(region, "nva_per_worker")
+      wages <- value_at(region, "wages_per_worker")
+      metric <- function(label, value, values, colour) {
+        width <- if (is.finite(value) && any(is.finite(values))) 100 * value / max(values, na.rm = TRUE) else 0
+        tags$div(
+          class = "atlas-metric",
+          tags$div(class = "atlas-metric-head",
+                   tags$span(label),
+                   tags$strong(if (is.finite(value)) sprintf("Rs %.2f lakh", value) else "No data")),
+          tags$div(class = "atlas-bar-track",
+                   tags$div(class = "atlas-bar-fill",
+                            style = sprintf("width: %.2f%%; background: %s;", width, colour)))
+        )
+      }
+      tags$div(
+        class = "atlas-state-card",
+        tags$div(class = "atlas-state-name", region),
+        metric("Net value added / worker", nva, nva_all, "#11a899"),
+        metric("Wages / worker", wages, wages_all, "#e5a448")
+      )
+    }
+    comparison <- if (length(regions) == 2L) {
+      first <- regions[1]; second <- regions[2]
+      wa <- value_at(first, "wages_per_worker")
+      wb <- value_at(second, "wages_per_worker")
+      pa <- value_at(first, "nva_per_worker")
+      pb <- value_at(second, "nva_per_worker")
+      if (all(is.finite(c(wa, wb, pa, pb)))) {
+        tags$p(class = "atlas-comparison",
+               sprintf("%s versus %s: the difference in wages per worker is Rs %.2f lakh; the difference in net value added per worker is Rs %.2f lakh.",
+                       first, second, abs(wa - wb), abs(pa - pb)))
+      }
+    }
+    tagList(
+      tags$div(class = "atlas-state-grid", lapply(regions, state_card)),
+      comparison,
+      tags$p(class = "atlas-fineprint",
+             "ASI 2023-24, registered factory sector, all industries; current-price state averages. Bars are scaled to the larger selected state within each measure, not across measures. The difference in value added and the difference in wages are descriptive; they do not identify who captured the difference.")
+    )
+  })
+
+  output$context_story <- renderUI({
+    regions <- focus()
+    d <- d3poindia::nfhs_state
+    if (!length(regions)) return(NULL)
+    cell <- function(region, indicator) {
+      v <- d$value[d$region == region & d$indicator == indicator]
+      if (length(v) == 1L && is.finite(v)) sprintf("%.1f%%", v) else "No data"
+    }
+    tags$div(
+      class = "atlas-context-grid",
+      lapply(regions, function(region) tags$div(
+        class = "atlas-context-card",
+        tags$strong(region),
+        tags$div(tags$span("Women with 10+ years of schooling"), tags$b(cell(region, "women_schooling10"))),
+        tags$div(tags$span("Women aged 15-49 who are anaemic"), tags$b(cell(region, "women_anaemia")))
+      ))
+    )
   })
 
   # ---- Map ------------------------------------------------------------------
   output$plot <- render_d3po({
     ind <- input$indicator
-    if (is.null(ind)) ind <- "women_schooling10"
+    if (is.null(ind)) ind <- "nva_per_worker"
     d <- map_data_for(ind)           # states with no value keep NA -> grey, never 0
 
     pal <- get_palette(input$gradient, 5)
@@ -75,17 +158,19 @@ app_server <- function(input, output, session) {
     disp <- function(v) if (pct) paste0(v, "%") else paste0(round(v, 2), " ", unit)
     o <- order(sel$value, decreasing = TRUE)
     sel <- sel[o, ]
+    active <- focus()
     mx <- max(sel$value, na.rm = TRUE)
     rows <- vapply(seq_len(nrow(sel)), function(i) {
       w <- round(100 * sel$value[i] / mx, 1)
       sprintf(
         paste0(
-          "<tr><td style='text-align:right;color:#666;padding-right:6px;'>%d</td>",
+          "<tr%s><td style='text-align:right;color:#666;padding-right:6px;'>%d</td>",
           "<td style='padding-right:8px;'>%s</td>",
           "<td style='width:55%%;'><div role='img' aria-label='%s %s' ",
           "style='background:#0f5c6b;height:12px;width:%s%%;border-radius:2px;display:inline-block;'></div></td>",
           "<td style='text-align:right;font-variant-numeric:tabular-nums;padding-left:8px;'>%s</td></tr>"
         ),
+        if (sel$region[i] %in% active) " class='atlas-row-active'" else "", 
         i, sel$region[i], sel$region[i], disp(sel$value[i]), w, disp(sel$value[i])
       )
     }, character(1))
@@ -100,7 +185,7 @@ app_server <- function(input, output, session) {
   # ---- Methods & sources (layer-aware) -------------------------------------
   output$methods <- renderUI({
     ind <- input$indicator
-    if (is.null(ind)) ind <- "women_schooling10"
+    if (is.null(ind)) ind <- "nva_per_worker"
     sel <- selected()
     if (is_asi(ind)) {
       HTML(sprintf(
@@ -161,6 +246,7 @@ app_server <- function(input, output, session) {
     xlab <- "Wages per worker (Rs lakh/worker, current prices)"
     ylab <- "Net value added per worker (Rs lakh/worker, current prices)"
     accent <- "#b5651d"
+    active <- d$region %in% focus()
 
     # Stack the two panels on narrow (mobile) viewports; side-by-side otherwise.
     w_px <- session$clientData[["output_asi_scatter_width"]]
@@ -176,6 +262,8 @@ app_server <- function(input, output, session) {
                    main = "All States/UTs (full range)")
     graphics::title(xlab = xlab, ylab = ylab)
     graphics::grid(col = "#e6e6e6")
+    graphics::points(d$value_wages[active], d$value_nva[active], pch = 1,
+                     cex = 2.7, lwd = 2.6, col = "#d78424")
     graphics::points(d$value_wages[sk], d$value_nva[sk], pch = 1, cex = 2.4,
                      lwd = 2, col = accent)
     graphics::text(d$value_wages[sk], d$value_nva[sk],
@@ -191,9 +279,11 @@ app_server <- function(input, output, session) {
                      "Main cluster (zoom; Sikkim off scale)")
     graphics::title(xlab = xlab, ylab = ylab)
     graphics::grid(col = "#e6e6e6")
+    graphics::points(d$value_wages[active & !sk], d$value_nva[active & !sk],
+                     pch = 1, cex = 2.7, lwd = 2.6, col = "#d78424")
     lab_states <- c("Maharashtra", "Gujarat", "Tamil Nadu", "Karnataka",
                     "Kerala", "Bihar", "Uttarakhand", "Punjab")
-    li <- d$region %in% lab_states
+    li <- d$region %in% union(lab_states, focus()) & !sk
     graphics::text(d$value_wages[li], d$value_nva[li], labels = d$region[li],
                    pos = 3, cex = 0.72, col = "#333")
     # Sikkim is off the top of this zoom: mark its true x with an arrow, and put
@@ -226,7 +316,7 @@ app_server <- function(input, output, session) {
   output$download_data <- downloadHandler(
     filename = function() {
       ind <- input$indicator
-      if (is.null(ind)) ind <- "women_schooling10"
+      if (is.null(ind)) ind <- "nva_per_worker"
       prefix <- if (is_asi(ind)) "asi2023_24_" else "nfhs5_"
       paste0(prefix, ind, ".csv")
     },
